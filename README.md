@@ -11,10 +11,12 @@ make
 # To-do List
 + Redirection
 + Background Jobs
++ Batch Mode
++ Built-in Commands
 + Error Handling
 + Pipe
 
 # Reference
 + [A Unix Shell](http://ybwu.org/ecnu-oslabs/projects/myshell/docs/shell.html)
 + [Interlude: Process API](https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-api.pdf)
-+ [Build a Unix Shell By Yourself](https://www.jxtxzzw.com/archives/3717)
++ [Build a Unix Shell By Yourself/自己动手写一个Unix Shell](https://www.jxtxzzw.com/archives/3717)

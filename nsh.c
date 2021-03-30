@@ -8,6 +8,9 @@
 #define _MAX_ARGS 20
 #define _SHELL_NAME "nsh > "
 
+#define COMMAND_NOT_FOUND 0
+#define FORK_ERROR 1
+
 typedef struct command{
     FILE* input;
     FILE* output;
@@ -18,6 +21,24 @@ typedef struct command{
     //struct command* next;
     char* argv[_MAX_ARGS];
 }Command;
+
+void error_handling(int type)
+{
+    switch(type){
+        char error_message[90];
+        case COMMAND_NOT_FOUND:
+            strcpy(error_message,"nsh: command not found\n");
+            write(STDERR_FILENO, error_message, strlen(error_message));
+            break;
+        case FORK_ERROR:
+            strcpy(error_message,"nsh: fork error\n");
+            write(STDERR_FILENO, error_message, strlen(error_message));
+            break;
+        default:
+            strcpy(error_message,"nsh: an error has occurred\n");
+            write(STDERR_FILENO, error_message, strlen(error_message));
+    }
+}
 
 char* format_cmd(char* cmd)
 {
@@ -78,21 +99,28 @@ Command* parse_command(char* buf)
 
 void execute_command(Command* command)
 {
-    int pid=fork();
     if(!strcmp(command->arg_name,"exit")){
-        free(command);
+        fputs("exit\n",stdout);
         exit(0);
     }
     else{
+        int pid=fork();
         if(pid<0){
-            perror("fork error!\n");
+            error_handling(FORK_ERROR);
         }
         else if(pid==0){
-            execvp(command->arg_name,command->argv);
+            if(execvp(command->arg_name,command->argv)<0)
+                error_handling(COMMAND_NOT_FOUND);
+            _exit(0);
         }
         else{
             int wait_ret=wait(NULL);
         }
+    }
+    free(command->arg_name);
+    for(int i=0;i<_MAX_ARGS;i++){
+        if(command->argv[i]!=NULL)
+            free(command->argv[i]);
     }
     free(command);
     return;
@@ -101,12 +129,11 @@ void execute_command(Command* command)
 int main(int argc, char** argv)
 {
     char* buf=(char*)malloc(_BUFSIZE*sizeof(char));
-    fputs("Welcome to NaiveShell!\n",stdout);
 
     while(1){
         fputs(_SHELL_NAME, stdout);
-        memset(buf,0,_BUFSIZE);
 
+        memset(buf,0,_BUFSIZE);
         fgets(buf, _BUFSIZE, stdin);
         Command* command=parse_command(format_cmd(buf));
         if(command==NULL){

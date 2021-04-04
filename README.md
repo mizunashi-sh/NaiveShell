@@ -12,7 +12,6 @@ make
 + Redirection
 + Background Jobs
 + Batch Mode
-+ Built-in Commands
 + Error Handling
 + Pipe
 

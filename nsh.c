@@ -10,6 +10,7 @@
 
 #define COMMAND_NOT_FOUND 0
 #define FORK_ERROR 1
+#define FILE_DIR_NOT_FOUND 2
 
 typedef struct command
 {
@@ -33,6 +34,10 @@ void error_handling(int type)
         break;
     case FORK_ERROR:
         strcpy(error_message, "nsh: fork error\n");
+        write(STDERR_FILENO, error_message, strlen(error_message));
+        break;
+    case FILE_DIR_NOT_FOUND:
+        strcpy(error_message, "nsh: no such file or directory\n");
         write(STDERR_FILENO, error_message, strlen(error_message));
         break;
     default:
@@ -113,6 +118,25 @@ void execute_command(Command *command)
     {
         fputs("exit\n", stdout);
         exit(0);
+    }
+    else if (!strcmp(command->argv[0], "cd"))
+    {
+        char *dir=NULL;
+        if(command->argv[1]==NULL||!strcmp(command->argv[1],"~"))
+            dir=getenv("HOME");
+        else
+            dir=command->argv[1];
+        if(chdir(dir)<0)
+            error_handling(FILE_DIR_NOT_FOUND);
+    }
+    else if(!strcmp(command->argv[0],"pwd")){
+        char cwd[_BUFSIZE];
+        getcwd(cwd,_BUFSIZE);
+        fputs(cwd,command->output);
+        fputs("\n",command->output);
+    }
+    else if(!strcmp(command->argv[0],"wait")){
+        wait(NULL);
     }
     else
     {

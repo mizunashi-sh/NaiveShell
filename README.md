@@ -10,7 +10,6 @@ make
 
 # To-do List
 + Redirection
-+ Background Jobs
 + Batch Mode
 + Error Handling
 + Pipe

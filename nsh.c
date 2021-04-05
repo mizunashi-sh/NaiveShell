@@ -11,6 +11,7 @@
 #define COMMAND_NOT_FOUND 0
 #define FORK_ERROR 1
 #define FILE_DIR_NOT_FOUND 2
+#define WAIT_FOR_CHILD_PROCESS 3
 
 typedef struct command
 {
@@ -38,6 +39,10 @@ void error_handling(int type)
         break;
     case FILE_DIR_NOT_FOUND:
         strcpy(error_message, "nsh: no such file or directory\n");
+        write(STDERR_FILENO, error_message, strlen(error_message));
+        break;
+    case WAIT_FOR_CHILD_PROCESS:
+        strcpy(error_message, "nsh: wait for child process\n");
         write(STDERR_FILENO, error_message, strlen(error_message));
         break;
     default:
@@ -103,6 +108,11 @@ Command *parse_command(char *buf)
     int i = 0;
     while (token != NULL)
     {
+        if(!strcmp(token,"&")){
+            command->background=1;
+            token=strtok(NULL," ");
+            continue;
+        }
         command->argv[i] = (char *)malloc(sizeof(char) * strlen(token));
         strcpy(command->argv[i], token);
         i++;
@@ -153,7 +163,13 @@ void execute_command(Command *command)
         }
         else
         {
-            int wait_ret = wait(NULL);
+            if(command->background==1&pid!=0){
+                printf("[pid %d]\n",pid);
+                return;
+            }
+            if(waitpid(pid,NULL,0)==-1){
+                error_handling(WAIT_FOR_CHILD_PROCESS);
+            }
         }
     }
 }
@@ -165,7 +181,6 @@ int main(int argc, char **argv)
     while (1)
     {
         fputs(_SHELL_NAME, stdout);
-
         memset(buf, 0, _BUFSIZE);
         fgets(buf, _BUFSIZE, stdin);
         Command *command = parse_command(format_cmd(buf));
